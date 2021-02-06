@@ -1,0 +1,16 @@
+[
+  {
+    "listen": "127.0.0.1:20000",
+    "service_name": "Mitsuyu",
+    "tls": "true",
+    "tls_cert": "cert.pem",
+    "tls_key": "key.pem"
+  },
+  {
+    "listen": "",
+    "service_name": "default Mitsuyu",
+    "tls": "true/false, default false",
+    "tls_cert": "certificate",
+    "tls_key": "private key"
+  }
+]

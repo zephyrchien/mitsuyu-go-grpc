@@ -1,0 +1,48 @@
+[
+  {
+    "local": "127.0.0.1:10000",
+    "remote": "127.0.0.1:20000",
+    "service_name": "Mitsuyu",
+    "tls": "true",
+    "tls_ca": "cert.pem",
+    "tls_sni": "localhost",
+    "tls_verify": "true",
+    "compress": "true",
+    "strategy": [
+      {
+        "port_range": "80, 8080-9000",
+        "block": "true"
+      },
+      {
+        "domain_suffix": "baidu.com",
+        "dns": "8.8.8.8"
+      }
+    ]
+  },
+  {
+    "local": "local address",
+    "remote": "remote address",
+    "service_name": "default Mitsuyu",
+    "tls": "true/false, default false",
+    "tls_ca": "ca-file",
+    "tls_sni": "defalut remote address",
+    "tls_verify": "true/false, default true",
+    "compress": "true/false",
+    "strategy": [
+      {
+	"dns": "x.x.x.x:53",
+	"next": "example.com:443",
+	"block": "true/false, default false",
+	"ip_range": "x.x.x.x/x",
+        "port_range": "xx or xx-xx, separate by comma",
+	"domain_prefix": "www",
+	"domain_suffix": ".com",
+	"domain_contain": "deep-dark-dark"
+      },
+      {
+        "..": "..",
+        "...": "..."
+      }
+    ]
+  }
+]

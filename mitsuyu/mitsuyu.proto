@@ -1,0 +1,12 @@
+syntax = "proto3";
+option go_package = "github.com/ZephyrChien/Mitsuyu/mitsuyu";
+
+message Data {
+    bytes head = 1;
+    bytes data = 2;
+    bytes tail = 3;
+}
+
+service Mitsuyu {
+    rpc proxy(stream Data) returns (stream Data){}
+}
