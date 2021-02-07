@@ -87,7 +87,7 @@ func decideDestination(md metadata.MD) (out transport.Outbound, err error) {
 	}()
 	var isdn, host, port, dns, next string
 	isdn = md.Get("isdn")[0]
-	host = md.Get("host")[0]
+	host = md.Get("xxhost")[0]
 	port = md.Get("port")[0]
 	dns = md.Get("dns")[0]
 	next = md.Get("next")[0]

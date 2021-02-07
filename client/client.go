@@ -149,11 +149,11 @@ func (c *Client) deliver(conn net.Conn) {
 
 func (c *Client) handle(in transport.Inbound) {
 	md := metadata.New(map[string]string{
-		"host": in.Addr().Host,
-		"port": in.Addr().Port,
-		"isdn": strconv.FormatBool(in.Addr().Isdn),
-		"dns":  "default",
-		"next": "null",
+		"xxhost": in.Addr().Host,
+		"port":   in.Addr().Port,
+		"isdn":   strconv.FormatBool(in.Addr().Isdn),
+		"dns":    "default",
+		"next":   "null",
 	})
 	if allow := c.applyClientStrategy(in.Addr(), md); !allow {
 		return

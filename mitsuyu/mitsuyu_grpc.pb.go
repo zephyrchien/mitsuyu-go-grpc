@@ -54,7 +54,7 @@ func (c *mitsuyuClient) Proxy(ctx context.Context, opts ...grpc.CallOption) (Mit
 */
 
 func (c *mitsuyuClient) Proxy(ctx context.Context, opts ...grpc.CallOption) (Mitsuyu_ProxyClient, error) {
-	stream, err := c.cc.NewStream(ctx, &genMitsuyu_ServiceDesc(c.serviceName).Streams[0], c.serviceName+"/proxy", opts...)
+	stream, err := c.cc.NewStream(ctx, &genMitsuyu_ServiceDesc(c.serviceName).Streams[0], "/"+c.serviceName+"/proxy", opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	mode = flag.String("m", "server", "mode")
-	local = flag.String("l","127.0.0.1","8080")
-	sname = flag.String("name","Mitsuyu","service name")
+	mode = flag.String("m", "server", "mode, server or client")
+	local = flag.String("l","127.0.0.1:8080","listen addr, support socks5/http")
+	sname = flag.String("name","Mitsuyu","service name, path=/service_name/proxy")
 	tls = flag.Bool("tls",false,"enable tls")
 	certfile = flag.String("cert","cert.pem","certificate directory")
 	keyfile = flag.String("key","key.pem","private key directory")
