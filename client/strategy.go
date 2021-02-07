@@ -26,7 +26,7 @@ func blockReservedAddr(addr *common.Addr) (block bool) {
 	if x == nil {
 		return true
 	}
-	if x.IsGlobalUnicast() || x.IsInterfaceLocalMulticast() ||
+	if x.IsInterfaceLocalMulticast() ||
 		x.IsLinkLocalMulticast() || x.IsLinkLocalUnicast() ||
 		x.IsLoopback() || x.IsMulticast() || x.IsUnspecified() {
 		return true
