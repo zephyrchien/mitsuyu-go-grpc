@@ -117,8 +117,10 @@ func decideDestination(md metadata.MD) (out transport.Outbound, err error) {
 	if dns == "default" || isdn == "false" {
 		return net.Dial("tcp", host+":"+port)
 	}
-	if addr, err = ipLookup(host, dns); err != nil {
+	if ip, err := ipLookup(host, dns); err != nil {
 		addr = host + ":" + port
+	} else {
+		addr = ip + ":" + port
 	}
 	return net.Dial("tcp", addr)
 }
