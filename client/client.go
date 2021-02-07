@@ -57,9 +57,12 @@ func New(config *common.ClientConfig) (*Client, error) {
 		if sni == "" {
 			sni = remoteHost
 		}
-		certpool := x509.NewCertPool()
+		var certpool *x509.CertPool
 		if config.TLSCA != "" {
-			if cafile, err := ioutil.ReadFile(config.TLSCA); err == nil {
+			if cafile, err := ioutil.ReadFile(config.TLSCA); err != nil {
+				return nil, fmt.Errorf("Common: Unable to load ca-file")
+			} else {
+				certpool = x509.NewCertPool()
 				if ok := certpool.AppendCertsFromPEM(cafile); !ok {
 					certpool = nil
 				}
@@ -156,6 +159,7 @@ func (c *Client) handle(in transport.Inbound) {
 		"next":   "null",
 	})
 	if allow := c.applyClientStrategy(in.Addr(), md); !allow {
+		fmt.Printf("%-5s| %s:%s [blocked]\n", in.Proto(), in.Addr().Host, in.Addr().Port)
 		return
 	}
 
@@ -206,6 +210,9 @@ func (c *Client) handle(in transport.Inbound) {
 }
 
 func (c *Client) applyClientStrategy(addr *common.Addr, md metadata.MD) (allow bool) {
+	if blockReservedAddr(addr) {
+		return false
+	}
 	var matched = false
 	var index = 0
 	for i, rules := range c.strategyGroup {

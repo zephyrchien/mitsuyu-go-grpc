@@ -89,22 +89,15 @@ func recvDataRequest(conn net.Conn) (*common.Addr, error) {
 	var host string
 	switch atyp {
 	case 0x01:
-		host = net.IP([]byte{buf[4], buf[5], buf[6], buf[7]}).String()
+		host = net.IP(buf[4:8]).String()
 	case 0x03:
-		l := int8(buf[4])
-		b := make([]byte, 0, l)
-		for i := int8(0); i < l; i++ {
-			b = append(b, buf[5+i])
-		}
-		host = string(b)
+		l := int(buf[4])
+		host = string(buf[5 : l+5])
 	case 0x04:
-		b := make([]byte, 16)
-		for i := 0; i < 16; i++ {
-			b = append(b, buf[4+i])
-		}
-		host = net.IP(b).String()
+		host = net.IP(buf[4:20]).String()
 	}
-	return &common.Addr{Isdn: atyp == 0x03, Host: host, Port: strconv.Itoa(int(port))}, nil
+	var isdn = (atyp == 0x03 && net.ParseIP(host) == nil)
+	return &common.Addr{Isdn: isdn, Host: host, Port: strconv.Itoa(int(port))}, nil
 }
 
 func sendDataReply(conn net.Conn) error {
