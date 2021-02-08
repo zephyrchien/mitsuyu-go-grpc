@@ -145,6 +145,8 @@ func (c *Client) deliver(conn net.Conn) {
 		c.handle(s5)
 	} else if h, err := transport.HttpHandshake(buf[:n], conn); err == nil {
 		c.handle(h)
+	} else if rawTCP, err := transport.NewRawTCPWithSniff(buf[:n], conn); err == nil {
+		c.handle(rawTCP)
 	} else {
 		fmt.Errorf("Inbound: Unknown protocol")
 	}
@@ -159,7 +161,7 @@ func (c *Client) handle(in transport.Inbound) {
 		"next":   "null",
 	})
 	if allow := c.applyClientStrategy(in.Addr(), md); !allow {
-		fmt.Printf("%-5s| %s:%s [blocked]\n", in.Proto(), in.Addr().Host, in.Addr().Port)
+		fmt.Printf("%-6s| %s:%s [blocked]\n", in.Proto(), in.Addr().Host, in.Addr().Port)
 		return
 	}
 
@@ -171,7 +173,7 @@ func (c *Client) handle(in transport.Inbound) {
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 
-	fmt.Printf("%-5s| %s:%s [dns: %s]\n", in.Proto(), in.Addr().Host, in.Addr().Port, md.Get("dns")[0])
+	fmt.Printf("%-6s| %s:%s [dns: %s]\n", in.Proto(), in.Addr().Host, in.Addr().Port, md.Get("dns")[0])
 	// forward
 	go func() {
 		defer ccc.Close()

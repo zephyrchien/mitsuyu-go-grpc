@@ -14,6 +14,7 @@ type Http struct {
 	conn   net.Conn
 	addr   *common.Addr
 	method string
+	proto  string
 	buffer *bytes.Buffer
 }
 
@@ -22,17 +23,18 @@ func (h *Http) Addr() *common.Addr {
 }
 
 func (h *Http) Proto() string {
-	return "http"
+	return h.proto
 }
 func (h *Http) IsTun() bool {
 	return h.method == "connect"
 }
 func (h *Http) Read(b []byte) (int, error) {
-	if h.IsTun() {
+	if h.buffer == nil {
 		return h.conn.Read(b)
-	} else {
-		return h.buffer.Read(b)
 	}
+	n, err := h.buffer.Read(b)
+	h.buffer = nil
+	return n, err
 }
 func (h *Http) Write(b []byte) (int, error) {
 	return h.conn.Write(b)
@@ -54,7 +56,7 @@ func HttpHandshake(buf []byte, conn net.Conn) (*Http, error) {
 		if err = handshakeTunnel(conn); err != nil {
 			return nil, wrapErrorHttp(err)
 		}
-		return &Http{conn: conn, addr: addr, method: "connect"}, nil
+		return &Http{conn: conn, addr: addr, method: "connect", proto: "https"}, nil
 	}
 
 	// plain http
@@ -76,7 +78,7 @@ func HttpHandshake(buf []byte, conn net.Conn) (*Http, error) {
 			return nil, err
 		}
 	}
-	return &Http{conn: conn, addr: addr, method: method, buffer: buffer}, nil
+	return &Http{conn: conn, addr: addr, method: method, proto: "http", buffer: buffer}, nil
 }
 
 func parseFirstLine(line string) (method, link string, err error) {
