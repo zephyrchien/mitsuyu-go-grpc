@@ -145,6 +145,9 @@ func (c *Client) deliver(conn net.Conn) {
 		c.handle(s5)
 	} else if h, err := transport.HttpHandshake(buf[:n], conn); err == nil {
 		c.handle(h)
+	} else if rawTCP, err := transport.NewRawTCPFromRedirect(buf[:n], conn); err == nil &&
+		rawTCP.Addr().Host+":"+rawTCP.Addr().Port != c.local {
+		c.handle(rawTCP)
 	} else if rawTCP, err := transport.NewRawTCPWithSniff(buf[:n], conn); err == nil {
 		c.handle(rawTCP)
 	} else {
@@ -153,6 +156,9 @@ func (c *Client) deliver(conn net.Conn) {
 }
 
 func (c *Client) handle(in transport.Inbound) {
+	if !in.Addr().Isdn {
+		transport.GetDomainName(in)
+	}
 	md := metadata.New(map[string]string{
 		"xxhost": in.Addr().Host,
 		"port":   in.Addr().Port,

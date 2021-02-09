@@ -28,6 +28,15 @@ func (h *Http) Proto() string {
 func (h *Http) IsTun() bool {
 	return h.method == "connect"
 }
+
+func (h *Http) SetAddr(addr *common.Addr) {
+	h.addr = addr
+}
+
+func (h *Http) SetBuffer(buffer *bytes.Buffer) {
+	h.buffer = buffer
+}
+
 func (h *Http) Read(b []byte) (int, error) {
 	if h.buffer == nil {
 		return h.conn.Read(b)

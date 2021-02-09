@@ -3,8 +3,25 @@ package transport
 import (
 	"bytes"
 	"fmt"
+	"github.com/ZephyrChien/Mitsuyu/common"
 	"strings"
 )
+
+func GetDomainName(in Inbound) {
+	buf := make([]byte, 1024)
+	n, err := in.Read(buf)
+	if err != nil {
+		return
+	}
+	buffer := bytes.NewBuffer(buf[:n])
+	in.SetBuffer(buffer)
+	host, err := SniffHost(buf[:n])
+	if err != nil {
+		return
+	}
+	addr := &common.Addr{Isdn: true, Host: host, Port: in.Addr().Port}
+	in.SetAddr(addr)
+}
 
 func SniffHost(buf []byte) (string, error) {
 	host, err := SniffFromHTTP(buf)

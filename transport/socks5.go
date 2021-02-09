@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/ZephyrChien/Mitsuyu/common"
 	"net"
@@ -8,8 +9,9 @@ import (
 )
 
 type Socks5 struct {
-	conn net.Conn
-	addr *common.Addr
+	conn   net.Conn
+	addr   *common.Addr
+	buffer *bytes.Buffer
 }
 
 func (s5 *Socks5) Addr() *common.Addr {
@@ -20,8 +22,21 @@ func (s5 *Socks5) Proto() string {
 	return "socks5"
 }
 
+func (s5 *Socks5) SetAddr(addr *common.Addr) {
+	s5.addr = addr
+}
+
+func (s5 *Socks5) SetBuffer(buffer *bytes.Buffer) {
+	s5.buffer = buffer
+}
+
 func (s5 *Socks5) Read(b []byte) (int, error) {
-	return s5.conn.Read(b)
+	if s5.buffer == nil {
+		return s5.conn.Read(b)
+	}
+	n, err := s5.buffer.Read(b)
+	s5.buffer = nil
+	return n, err
 }
 func (s5 *Socks5) Write(b []byte) (int, error) {
 	return s5.conn.Write(b)
