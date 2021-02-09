@@ -34,11 +34,11 @@ type MitsuyuClient interface {
 
 type mitsuyuClient struct {
 	serviceName string
-	cc grpc.ClientConnInterface
+	cc          grpc.ClientConnInterface
 }
 
-func NewMitsuyuClient(cc grpc.ClientConnInterface,serviceName string) MitsuyuClient {
-	return &mitsuyuClient{cc:cc,serviceName:serviceName}
+func NewMitsuyuClient(cc grpc.ClientConnInterface, serviceName string) MitsuyuClient {
+	return &mitsuyuClient{cc: cc, serviceName: serviceName}
 }
 
 // EDITED
@@ -108,7 +108,7 @@ type UnsafeMitsuyuServer interface {
 	mustEmbedUnimplementedMitsuyuServer()
 }
 
-func RegisterMitsuyuServer(s grpc.ServiceRegistrar, srv MitsuyuServer,serviceName string) {
+func RegisterMitsuyuServer(s grpc.ServiceRegistrar, srv MitsuyuServer, serviceName string) {
 	s.RegisterService(genMitsuyu_ServiceDesc(serviceName), srv)
 }
 
@@ -160,7 +160,7 @@ var Mitsuyu_ServiceDesc = grpc.ServiceDesc{
 }
 */
 
-func genMitsuyu_ServiceDesc(serviceName string) *grpc.ServiceDesc{
+func genMitsuyu_ServiceDesc(serviceName string) *grpc.ServiceDesc {
 	return &grpc.ServiceDesc{
 		ServiceName: serviceName,
 		HandlerType: (*MitsuyuServer)(nil),

@@ -22,6 +22,8 @@ type Server struct {
 	addr        string
 	serviceName string
 	tls         *tls.Config
+	logger      *common.Logger
+	done        chan struct{}
 	mitsuyu.UnimplementedMitsuyuServer
 }
 
@@ -37,6 +39,7 @@ func New(config *common.ServerConfig) (*Server, error) {
 			ClientAuth:   tls.NoClientCert,
 		}
 	}
+	s.logger = common.NewLogger(config.LogLevel)
 	return s, nil
 }
 
@@ -44,11 +47,17 @@ func (s *Server) Addr() string {
 	return s.addr
 }
 
-func (s *Server) Serve() {
+func (s *Server) GetLogger() *common.Logger {
+	return s.logger
+}
+
+func (s *Server) Run() {
+	s.done = make(chan struct{}, 0)
 	lis, err := net.Listen("tcp", s.addr)
 	if err != nil {
 		return
 	}
+	defer lis.Close()
 	var opts []grpc.ServerOption
 	if s.tls != nil {
 		creds := credentials.NewTLS(s.tls)
@@ -56,7 +65,16 @@ func (s *Server) Serve() {
 	}
 	ss := grpc.NewServer(opts...)
 	mitsuyu.RegisterMitsuyuServer(ss, s, s.serviceName)
-	ss.Serve(lis)
+	go ss.Serve(lis)
+	defer ss.Stop()
+	<-s.done
+}
+
+func (s *Server) Stop() {
+	defer func() {
+		recover()
+	}()
+	close(s.done)
 }
 
 // grpc functions

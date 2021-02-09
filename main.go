@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ZephyrChien/Mitsuyu/client"
 	"github.com/ZephyrChien/Mitsuyu/common"
+	"github.com/ZephyrChien/Mitsuyu/manager"
 	"github.com/ZephyrChien/Mitsuyu/server"
 	"os"
 	"strconv"
@@ -32,38 +33,45 @@ func init() {
 }
 
 func main() {
+	m := manager.NewManager()
 	if *mode == "server" && *config == "" {
-		startSingleServer()
+		loadSingleServer(m)
 	} else if *mode == "server" && *config != "" {
-		startServer()
+		loadServer(m)
 	} else if *mode == "client" && *config == "" {
-		startSingleClient()
+		loadSingleClient(m)
 	} else if *mode == "client" && *config != "" {
-		startClient()
+		loadClient(m)
 	} else {
 		fmt.Println("use cmd flags or specify config file")
 		os.Exit(0)
 	}
+	m.StartAll()
+	m.StartLogAll(os.Stdout)
 	select {}
 }
 
-func startServer() {
+func loadServer(m *manager.Manager) {
 	var servers []*common.ServerConfig
 	if err := common.LoadServerConfig(*config, &servers); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	for _, s := range servers {
+	for i, s := range servers {
+		tag := s.Tag
+		if tag == "" {
+			tag = strconv.Itoa(i)
+		}
 		ss, err := server.New(s)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		go ss.Serve()
+		m.Add(tag, ss)
 	}
 }
 
-func startSingleServer() {
+func loadSingleServer(m *manager.Manager) {
 	conf := &common.ServerConfig{
 		Addr:        *local,
 		ServiceName: *sname,
@@ -76,26 +84,30 @@ func startSingleServer() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	go s.Serve()
+	m.Add("single", s)
 }
 
-func startClient() {
+func loadClient(m *manager.Manager) {
 	var clients []*common.ClientConfig
 	if err := common.LoadClientConfig(*config, &clients); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	for _, c := range clients {
+	for i, c := range clients {
+		tag := c.Tag
+		if tag == "" {
+			tag = strconv.Itoa(i)
+		}
 		cc, err := client.New(c)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		go cc.Run()
+		m.Add(tag, cc)
 	}
 }
 
-func startSingleClient() {
+func loadSingleClient(m *manager.Manager) {
 	conf := &common.ClientConfig{
 		Local:       *local,
 		Remote:      *remote,
@@ -111,5 +123,5 @@ func startSingleClient() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	go c.Run()
+	m.Add("single", c)
 }

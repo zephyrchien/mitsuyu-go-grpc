@@ -29,6 +29,8 @@ type Client struct {
 	compress      string
 	serviceName   string
 	strategyGroup []*common.Strategy
+	logger        *common.Logger
+	done          chan struct{}
 }
 
 func New(config *common.ClientConfig) (*Client, error) {
@@ -77,6 +79,10 @@ func New(config *common.ClientConfig) (*Client, error) {
 
 	// load strategy
 	c.strategyGroup = config.StrategyGroup
+
+	// load log level
+	c.logger = common.NewLogger(config.LogLevel)
+
 	return c, nil
 }
 
@@ -88,18 +94,36 @@ func (c *Client) Remote() string {
 	return c.remote
 }
 
+func (c *Client) GetLogger() *common.Logger {
+	return c.logger
+}
+
 func (c *Client) Run() {
+	c.done = make(chan struct{}, 0)
 	lis, err := net.Listen("tcp", c.local)
 	if err != nil {
 		return
 	}
+	defer lis.Close()
 	for {
-		conn, err := lis.Accept()
-		if err != nil {
-			continue
+		select {
+		case <-c.done:
+			return
+		default:
+			conn, err := lis.Accept()
+			if err != nil {
+				continue
+			}
+			go c.deliver(conn)
 		}
-		go c.deliver(conn)
 	}
+}
+
+func (c *Client) Stop() {
+	defer func() {
+		recover()
+	}()
+	close(c.done)
 }
 
 func (c *Client) CallMitsuyuProxy(md metadata.MD) (*transport.GRPCStreamClient, error) {
@@ -167,7 +191,7 @@ func (c *Client) handle(in transport.Inbound) {
 		"next":   "null",
 	})
 	if allow := c.applyClientStrategy(in.Addr(), md); !allow {
-		fmt.Printf("%-6s| %s:%s [blocked]\n", in.Proto(), in.Addr().Host, in.Addr().Port)
+		c.logger.Infof(fmt.Sprintf("%-6s| %s:%s [blocked]\n", in.Proto(), in.Addr().Host, in.Addr().Port))
 		return
 	}
 
@@ -179,7 +203,7 @@ func (c *Client) handle(in transport.Inbound) {
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 
-	fmt.Printf("%-6s| %s:%s [dns: %s]\n", in.Proto(), in.Addr().Host, in.Addr().Port, md.Get("dns")[0])
+	c.logger.Infof(fmt.Sprintf("%-6s| %s:%s [dns: %s]\n", in.Proto(), in.Addr().Host, in.Addr().Port, md.Get("dns")[0]))
 	// forward
 	go func() {
 		defer ccc.Close()
