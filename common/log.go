@@ -47,6 +47,10 @@ func NewLogger(levelStr string) *Logger {
 	return &Logger{level: level, err: err, info: info, debug: debug}
 }
 
+func (l *Logger) SetLevel(level int) {
+	l.level = level
+}
+
 func (l *Logger) GetLevel() int {
 	return l.level
 }

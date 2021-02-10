@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"github.com/ZephyrChien/Mitsuyu/client"
 	"github.com/ZephyrChien/Mitsuyu/common"
 	"io"
 )
@@ -12,66 +13,85 @@ type Worker interface {
 }
 
 type Manager struct {
-	workers map[string]Worker
+	worker   Worker
+	recorder *LogRecorder
+	conns    *common.Connector
+	stats    *common.Statistician
 }
 
 func NewManager() *Manager {
-	workers := make(map[string]Worker)
-	return &Manager{workers: workers}
+	return &Manager{}
 }
 
-func (m *Manager) Add(tag string, worker Worker) {
-	m.workers[tag] = worker
-}
-
-func (m *Manager) Delete(tag string) {
-	delete(m.workers, tag)
-}
-
-func (m *Manager) Start(tag string) {
-	if worker, ok := m.workers[tag]; ok {
-		go worker.Run()
+func (m *Manager) Add(worker Worker, terminal bool) {
+	m.worker = worker
+	if c, ok := worker.(*client.Client); ok&&terminal {
+		m.conns = c.GetConnector()
+		m.stats = c.GetStatistician()
+		m.conns.Config(true)
+		m.stats.Config(true)
 	}
 }
 
-func (m *Manager) Stop(tag string) {
-	if worker, ok := m.workers[tag]; ok {
-		worker.Stop()
+func (m *Manager) SetRecorder(r *LogRecorder) {
+	m.recorder = r
+}
+
+func (m *Manager) GetRecorder() *LogRecorder {
+	return m.recorder
+}
+
+func (m *Manager) GetConnector() *common.Connector {
+	return m.conns
+}
+
+func (m *Manager) GetStatistician() *common.Statistician {
+	return m.stats
+}
+
+func (m *Manager) Start() {
+	if m.worker != nil {
+		go m.worker.Run()
 	}
 }
 
-func (m *Manager) StartAll() {
-	for _, worker := range m.workers {
-		go worker.Run()
+func (m *Manager) Stop() {
+	if m.worker != nil {
+		m.worker.Stop()
 	}
 }
 
-func (m *Manager) StopAll() {
-	for _, worker := range m.workers {
-		worker.Stop()
+func (m *Manager) StartLog(dst io.Writer) {
+	if m.worker != nil {
+		go m.worker.GetLogger().StartLog(dst)
 	}
 }
 
-func (m *Manager) StartLog(dst io.Writer, tag string) {
-	if worker, ok := m.workers[tag]; ok {
-		go worker.GetLogger().StartLog(dst)
+func (m *Manager) StopLog() {
+	if m.worker != nil {
+		m.worker.GetLogger().StopLog()
 	}
 }
 
-func (m *Manager) StopLog(tag string) {
-	if worker, ok := m.workers[tag]; ok {
-		worker.GetLogger().StopLog()
+func (m *Manager)StartConnector(){
+	if m.conns != nil {
+		m.conns.StartRecord()
 	}
 }
 
-func (m *Manager) StartLogAll(dst io.Writer) {
-	for _, worker := range m.workers {
-		go worker.GetLogger().StartLog(dst)
+func (m *Manager)StopConnector(){
+	if m.conns != nil {
+		m.conns.StopRecord()
 	}
 }
 
-func (m *Manager) StopLogAll() {
-	for _, worker := range m.workers {
-		worker.GetLogger().StopLog()
+func (m *Manager)StartStatistician(){
+	if m.stats != nil {
+		m.stats.StartRecord()
+	}
+}
+func (m *Manager)StopStatistician(){
+	if m.stats != nil {
+		m.stats.StopRecord()
 	}
 }

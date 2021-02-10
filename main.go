@@ -7,12 +7,13 @@ import (
 	"github.com/ZephyrChien/Mitsuyu/common"
 	"github.com/ZephyrChien/Mitsuyu/manager"
 	"github.com/ZephyrChien/Mitsuyu/server"
+	"github.com/ZephyrChien/Mitsuyu/terminal"
 	"os"
 	"strconv"
 )
 
 var (
-	mode   = flag.String("m", "", "mode, server/client")
+	mode   = flag.String("m", "", "mode, server/client/client_terminal")
 	local  = flag.String("l", "", "listen addr, [client] support socks5/http")
 	remote = flag.String("r", "", "[client] remote addr")
 	sname  = flag.String("sname", "", "service name [path=/service_name/proxy]")
@@ -38,37 +39,45 @@ func main() {
 		loadSingleServer(m)
 	} else if *mode == "server" && *config != "" {
 		loadServer(m)
-	} else if *mode == "client" && *config == "" {
+	} else if (*mode == "client"||*mode == "client_terminal") && *config == "" {
 		loadSingleClient(m)
-	} else if *mode == "client" && *config != "" {
+	} else if (*mode == "client"||*mode == "client_terminal") && *config != "" {
 		loadClient(m)
 	} else {
 		fmt.Println("use cmd flags or specify config file")
 		os.Exit(0)
 	}
-	m.StartAll()
-	m.StartLogAll(os.Stdout)
+	m.Start()
+	if *mode == "client_terminal"{
+		t,err:=terminal.NewTerminal(m,"black",0.2,0.7)
+		if err!=nil{
+			fmt.Println(err)
+			os.Exit(0)
+		}
+		r:=manager.NewLogRecorder()
+		m.SetRecorder(r)
+		m.StartLog(r)
+		m.StartConnector()
+		m.StartStatistician()
+		go t.Run()
+	}else{
+		m.StartLog(os.Stdout)
+	}
 	select {}
 }
 
 func loadServer(m *manager.Manager) {
-	var servers []*common.ServerConfig
-	if err := common.LoadServerConfig(*config, &servers); err != nil {
+	var s common.ServerConfig
+	if err := common.LoadServerConfig(*config, &s); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	for i, s := range servers {
-		tag := s.Tag
-		if tag == "" {
-			tag = strconv.Itoa(i)
-		}
-		ss, err := server.New(s)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		m.Add(tag, ss)
+	ss, err := server.New(&s)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
+	m.Add(ss,false)
 }
 
 func loadSingleServer(m *manager.Manager) {
@@ -84,27 +93,21 @@ func loadSingleServer(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add("single", s)
+	m.Add(s,false)
 }
 
 func loadClient(m *manager.Manager) {
-	var clients []*common.ClientConfig
-	if err := common.LoadClientConfig(*config, &clients); err != nil {
+	var c common.ClientConfig
+	if err := common.LoadClientConfig(*config, &c); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	for i, c := range clients {
-		tag := c.Tag
-		if tag == "" {
-			tag = strconv.Itoa(i)
-		}
-		cc, err := client.New(c)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		m.Add(tag, cc)
+	cc, err := client.New(&c)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
+	m.Add(cc,*mode=="client_terminal")
 }
 
 func loadSingleClient(m *manager.Manager) {
@@ -123,5 +126,5 @@ func loadSingleClient(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add("single", c)
+	m.Add(c,*mode=="client_terminal")
 }

@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 )
 
-func LoadServerConfig(file string, v *[]*ServerConfig) error {
+func LoadServerConfig(file string, v *ServerConfig) error {
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
@@ -13,7 +13,7 @@ func LoadServerConfig(file string, v *[]*ServerConfig) error {
 	return json.Unmarshal(content, v)
 }
 
-func LoadClientConfig(file string, v *[]*ClientConfig) error {
+func LoadClientConfig(file string, v *ClientConfig) error {
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err

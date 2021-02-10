@@ -30,6 +30,8 @@ type Client struct {
 	serviceName   string
 	strategyGroup []*common.Strategy
 	logger        *common.Logger
+	conns         *common.Connector
+	stats         *common.Statistician
 	done          chan struct{}
 }
 
@@ -83,6 +85,9 @@ func New(config *common.ClientConfig) (*Client, error) {
 	// load log level
 	c.logger = common.NewLogger(config.LogLevel)
 
+	// enable statistic
+	c.conns = common.NewConnector()
+	c.stats = common.NewStatistician()
 	return c, nil
 }
 
@@ -96,6 +101,14 @@ func (c *Client) Remote() string {
 
 func (c *Client) GetLogger() *common.Logger {
 	return c.logger
+}
+
+func (c *Client) GetConnector() *common.Connector {
+	return c.conns
+}
+
+func (c *Client) GetStatistician() *common.Statistician {
+	return c.stats
 }
 
 func (c *Client) Run() {
@@ -183,6 +196,9 @@ func (c *Client) handle(in transport.Inbound) {
 	if !in.Addr().Isdn {
 		transport.GetDomainName(in)
 	}
+	// statistic
+	c.conns.RecordOpen(in.Addr().Host)
+
 	md := metadata.New(map[string]string{
 		"xxhost": in.Addr().Host,
 		"port":   in.Addr().Port,
@@ -209,6 +225,8 @@ func (c *Client) handle(in transport.Inbound) {
 		defer ccc.Close()
 		defer in.Close()
 		buf := make([]byte, BUFFERSIZE)
+		// statistic
+		var traffic = 0
 		for {
 			n, err := in.Read(buf)
 			if err != nil {
@@ -217,28 +235,40 @@ func (c *Client) handle(in transport.Inbound) {
 			if err = stream.Send(&mitsuyu.Data{Data: buf[:n]}); err != nil {
 				break
 			}
+			// statistic
+			traffic += n
 		}
 		if h, ok := in.(*transport.Http); ok && !h.IsTun() {
 			time.Sleep(4 * time.Second)
 		}
 		wg.Done()
+		c.stats.RecordUplink(traffic)
 	}()
 	// reverse
 	go func() {
 		defer ccc.Close()
 		defer in.Close()
+		// statistic
+		var n = 0
+		var traffic = 0
 		for {
 			r, err := stream.Recv()
 			if err != nil {
 				break
 			}
-			if _, err = in.Write(r.GetData()); err != nil {
+			if n, err = in.Write(r.GetData()); err != nil {
 				break
 			}
+			// statistic
+			traffic += n
 		}
 		wg.Done()
+		// statistic
+		c.stats.RecordDownlink(traffic)
 	}()
 	wg.Wait()
+	// statistic
+	c.conns.RecordClose(in.Addr().Host)
 }
 
 func (c *Client) applyClientStrategy(addr *common.Addr, md metadata.MD) (allow bool) {
