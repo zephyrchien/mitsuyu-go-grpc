@@ -12,7 +12,7 @@ type Statistician struct {
 func NewStatistician() *Statistician {
 	uplink := make(chan int, 20)
 	downlink := make(chan int, 20)
-	return &Statistician{enable: true, uplink: uplink, downlink: downlink}
+	return &Statistician{uplink: uplink, downlink: downlink}
 }
 
 func (s *Statistician) Config(b bool) {

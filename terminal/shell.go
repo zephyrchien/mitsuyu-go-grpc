@@ -17,7 +17,7 @@ func (t *Terminal) renderShell(event chan string) {
 	cmd := ""
 	for e := range event {
 		switch e {
-		case "<Backspace>":
+		case "<Backspace>", "<C-<Backspace>>":
 			if cmd != "" {
 				b := []byte(cmd)
 				cmd = string(b[:len(b)-1])

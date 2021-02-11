@@ -16,7 +16,7 @@ func NewConnector() *Connector {
 	open := make(chan string, 20)
 	close := make(chan string, 20)
 	conns := make(map[string]int)
-	return &Connector{enable: false, open: open, close: close, conns: conns}
+	return &Connector{open: open, close: close, conns: conns}
 }
 
 func (c *Connector) Config(b bool) {
