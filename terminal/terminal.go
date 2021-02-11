@@ -8,11 +8,10 @@ import (
 )
 
 type element struct {
-	conn     *widgets.List      // left top
-	stat     *widgets.List      // left bottom
-	info     *widgets.List      // right top
-	shell    *widgets.List      // right top
-	cmd      *widgets.Paragraph // right bottom
+	conn     *widgets.List // left top
+	stat     *widgets.List // left bottom
+	info     *widgets.List // right top
+	shell    *widgets.List // right bottom
 	infoData []string
 }
 
@@ -38,12 +37,12 @@ func NewTerminal(m *manager.Manager, c string, xratio, yratio float64) (*Termina
 	conn := newList(color, color, true, true, true, true)
 	stat := newList(color, color, true, true, true, true)
 	info := newList(color, ui.ColorGreen, true, true, true, true)
-	shell := newList(color, color, true, true, true, false)
+	shell := newList(color, ui.ColorBlue, true, true, true, false)
 	conn.Title = "connection"
 	stat.Title = "statistic"
 	info.Title = "information"
 	shell.Title = "command"
-	cmd := newParagraph(color, true, true, false, true)
+	shell.Rows = []string{"mitsuyu> |"}
 	grid := ui.NewGrid()
 	termWidth, termHeight := ui.TerminalDimensions()
 	grid.SetRect(0, 0, termWidth, termHeight)
@@ -54,8 +53,7 @@ func NewTerminal(m *manager.Manager, c string, xratio, yratio float64) (*Termina
 		),
 		ui.NewCol(1-xratio,
 			ui.NewRow(yratio, info),
-			ui.NewRow(0.9-yratio, shell),
-			ui.NewRow(0.1, cmd),
+			ui.NewRow(1.0-yratio, shell),
 		),
 	)
 	infoData := make([]string, 0, 500)
@@ -64,7 +62,6 @@ func NewTerminal(m *manager.Manager, c string, xratio, yratio float64) (*Termina
 		stat:     stat,
 		info:     info,
 		shell:    shell,
-		cmd:      cmd,
 		infoData: infoData,
 	}
 	return &Terminal{
@@ -131,18 +128,29 @@ func newParagraph(color ui.Color, l, r, t, b bool) *widgets.Paragraph {
 
 func (t *Terminal) Run() {
 	idch := make(chan string, 5)
+	idch2 := make(chan string, 5)
+	shift := 0x00 // 0->info 1->shell
 	event := ui.PollEvents()
 	defer ui.Close()
 	ui.Render(t.grid)
 	go t.renderConn()
 	go t.renderStat()
 	go t.renderInfo(idch)
+	go t.renderShell(idch2)
 	for e := range event {
 		switch id := e.ID; id {
 		case "q", "<C-c>":
 			return
+		case "<Up>", "<Down>", "<MouseWheelUp>", "<MouseWheelDown>":
+			if shift == 0x00 {
+				idch <- id
+			} else {
+				idch2 <- id
+			}
+		case "<Tab>":
+			shift ^= 0x01
 		default:
-			idch <- id
+			idch2 <- id
 		}
 	}
 }

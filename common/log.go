@@ -35,15 +35,9 @@ func NewLogger(levelStr string) *Logger {
 	default:
 		level = LOG_NONE
 	}
-	if level >= LOG_ERR {
-		err = make(chan error, 5)
-	}
-	if level >= LOG_INFO {
-		info = make(chan string, 10)
-	}
-	if level >= LOG_DEBUG {
-		debug = make(chan string, 20)
-	}
+	err = make(chan error, 5)
+	info = make(chan string, 10)
+	debug = make(chan string, 20)
 	return &Logger{level: level, err: err, info: info, debug: debug}
 }
 

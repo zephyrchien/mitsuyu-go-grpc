@@ -37,6 +37,15 @@ func (m *Manager) SetRecorder(r *LogRecorder) {
 	m.recorder = r
 }
 
+func (m *Manager) GetWorker() Worker {
+	return m.worker
+}
+
+func (m *Manager) GetClient() (*client.Client, bool) {
+	c, ok := m.worker.(*client.Client)
+	return c, ok
+}
+
 func (m *Manager) GetRecorder() *LogRecorder {
 	return m.recorder
 }

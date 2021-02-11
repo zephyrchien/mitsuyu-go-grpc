@@ -99,6 +99,39 @@ func (c *Client) Remote() string {
 	return c.remote
 }
 
+func (c *Client) SetLocal(local string) {
+	c.local = local
+}
+func (c *Client) SetRemote(remote string) {
+	c.remote = remote
+}
+
+func (c *Client) SetTLSSNI(sni string) {
+	c.tls = &tls.Config{
+		ServerName:         sni,
+		InsecureSkipVerify: false,
+	}
+}
+
+func (c *Client) SetCompress(b bool) {
+	if b {
+		c.compress = "true"
+	} else {
+		c.compress = "false"
+	}
+}
+
+func (c *Client) GetSummary() []string {
+	ss := make([]string, 0, 6)
+	ss = append(ss, fmt.Sprintf("service: %s", c.serviceName))
+	ss = append(ss, fmt.Sprintf("local_addr: %s", c.local))
+	ss = append(ss, fmt.Sprintf("remote_addr: %s", c.remote))
+	ss = append(ss, fmt.Sprintf("use_tls: %t", c.tls != nil))
+	ss = append(ss, fmt.Sprintf("tls_sni: %s", c.tls.ServerName))
+	ss = append(ss, fmt.Sprintf("compress: %s", c.compress))
+	return ss
+}
+
 func (c *Client) GetLogger() *common.Logger {
 	return c.logger
 }
@@ -125,6 +158,8 @@ func (c *Client) Run() {
 	for {
 		select {
 		case <-c.done:
+			// log info
+			c.logger.Infof("__shutdown__\n")
 			return
 		default:
 			conn, err := lis.Accept()
@@ -144,7 +179,7 @@ func (c *Client) Stop() {
 	}()
 	close(c.done)
 	// log info
-	c.logger.Infof("__shutdown__\n")
+	c.logger.Infof("request shutdown\n")
 }
 
 func (c *Client) CallMitsuyuProxy(md metadata.MD) (*transport.GRPCStreamClient, error) {
@@ -291,7 +326,7 @@ func (c *Client) handle(in transport.Inbound) {
 			c.stats.RecordDownlink(n)
 		}
 		// log debug
-		c.logger.Debugf("Proxy:  Finish reverse proxy\n")
+		c.logger.Debugf("Proxy: Finish reverse proxy\n")
 		wg.Done()
 	}()
 	wg.Wait()

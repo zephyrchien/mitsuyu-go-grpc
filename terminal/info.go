@@ -16,7 +16,6 @@ func (t *Terminal) renderInfo(idch chan string) {
 			info.Rows = infoData
 			if ctrl == 5 {
 				info.ScrollBottom()
-				ui.Render(t.grid)
 			} else {
 				ctrl++
 			}
@@ -25,11 +24,10 @@ func (t *Terminal) renderInfo(idch chan string) {
 			switch id {
 			case "<Up>", "<MouseWheelUp>":
 				info.ScrollUp()
-				ui.Render(t.grid)
 			case "<Down>", "<MouseWheelDown>":
 				info.ScrollDown()
-				ui.Render(t.grid)
 			}
 		}
+		ui.Render(t.grid)
 	}
 }

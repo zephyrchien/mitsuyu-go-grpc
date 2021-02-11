@@ -21,6 +21,11 @@ func NewConnector() *Connector {
 
 func (c *Connector) Config(b bool) {
 	c.enable = b
+	if b {
+		c.conns = make(map[string]int)
+	} else {
+		c.conns = nil
+	}
 }
 
 func (c *Connector) GetOpen() chan string {
