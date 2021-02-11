@@ -1,0 +1,8 @@
+mitsuyu>
+ls # list client config
+clear
+exit
+reboot 
+shutdown
+set [arg1] [arg2] #arg1=[log, conn, stat, compress] #arg2=<int>(0~3)
+set [arg1] [arg2] #arg1=[local, remote, sni] #arg2=<string>(address or servername)

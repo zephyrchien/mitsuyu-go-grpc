@@ -26,7 +26,7 @@ func NewLogger(levelStr string) *Logger {
 	var debug chan string
 	var level int
 	switch levelStr {
-	case "err":
+	case "error":
 		level = LOG_ERR
 	case "info":
 		level = LOG_INFO

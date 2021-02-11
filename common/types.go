@@ -18,7 +18,6 @@ type Strategy struct {
 }
 
 type ServerConfig struct {
-	Tag      string `json:"tag,omitempty"`
 	LogLevel string `json:"log,omitempty"`
 	//
 	Addr        string `json:"listen,omitempty"`
@@ -30,7 +29,6 @@ type ServerConfig struct {
 }
 
 type ClientConfig struct {
-	Tag      string `json:"tag,omitempty"`
 	LogLevel string `json:"log,omitempty"`
 	//
 	Local       string `json:"local,omitempty"`
