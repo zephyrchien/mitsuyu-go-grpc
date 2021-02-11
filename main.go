@@ -62,6 +62,8 @@ func main() {
 		go t.Run()
 	}else{
 		m.StartLog(os.Stdout)
+		m.StartStatistician()
+		m.StartConnector()
 	}
 	select {}
 }

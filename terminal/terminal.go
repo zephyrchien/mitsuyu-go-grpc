@@ -8,8 +8,6 @@ import (
 )
 
 type element struct {
-	grid *ui.Grid
-
 	conn     *widgets.List      // left top
 	stat     *widgets.List      // left bottom
 	info     *widgets.List      // right top
@@ -22,7 +20,10 @@ type Terminal struct {
 	color   ui.Color
 	xratio  float64
 	yratio  float64
+	xmax    float64
+	ymax    float64
 	manager *manager.Manager
+	grid    *ui.Grid
 	element *element
 }
 
@@ -34,10 +35,10 @@ func NewTerminal(m *manager.Manager, c string, xratio, yratio float64) (*Termina
 	if err := ui.Init(); err != nil {
 		return nil, fmt.Errorf("Terminal: %v", err)
 	}
-	conn := newList(color, true, true, true, true)
-	stat := newList(color, true, true, true, true)
-	info := newList(color, true, true, true, true)
-	shell := newList(color, true, true, true, false)
+	conn := newList(color, color, true, true, true, true)
+	stat := newList(color, color, true, true, true, true)
+	info := newList(color, ui.ColorGreen, true, true, true, true)
+	shell := newList(color, color, true, true, true, false)
 	conn.Title = "connection"
 	stat.Title = "statistic"
 	info.Title = "information"
@@ -59,7 +60,6 @@ func NewTerminal(m *manager.Manager, c string, xratio, yratio float64) (*Termina
 	)
 	infoData := make([]string, 0, 500)
 	elem := &element{
-		grid:     grid,
 		conn:     conn,
 		stat:     stat,
 		info:     info,
@@ -71,7 +71,10 @@ func NewTerminal(m *manager.Manager, c string, xratio, yratio float64) (*Termina
 		color:   color,
 		xratio:  xratio,
 		yratio:  yratio,
+		xmax:    float64(termWidth),
+		ymax:    float64(termHeight),
 		manager: m,
+		grid:    grid,
 		element: elem,
 	}, nil
 }
@@ -92,7 +95,7 @@ func newGrid(color ui.Color) *ui.Grid {
 	return grid
 }
 
-func newList(color ui.Color, l, r, t, b bool) *widgets.List {
+func newList(color, selcolor ui.Color, l, r, t, b bool) *widgets.List {
 	block := &ui.Block{
 		Border:       true,
 		BorderStyle:  ui.NewStyle(color),
@@ -105,7 +108,7 @@ func newList(color ui.Color, l, r, t, b bool) *widgets.List {
 	return &widgets.List{
 		Block:            *block,
 		TextStyle:        ui.NewStyle(color),
-		SelectedRowStyle: ui.Theme.List.Text,
+		SelectedRowStyle: ui.NewStyle(selcolor),
 	}
 }
 
@@ -130,7 +133,7 @@ func (t *Terminal) Run() {
 	idch := make(chan string, 5)
 	event := ui.PollEvents()
 	defer ui.Close()
-	ui.Render(t.element.grid)
+	ui.Render(t.grid)
 	go t.renderConn()
 	go t.renderStat()
 	go t.renderInfo(idch)

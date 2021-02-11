@@ -13,10 +13,10 @@ type Connector struct {
 }
 
 func NewConnector() *Connector {
-	open := make(chan string, 10)
-	close := make(chan string, 10)
+	open := make(chan string, 20)
+	close := make(chan string, 20)
 	conns := make(map[string]int)
-	return &Connector{enable:false,open: open, close: close, conns: conns}
+	return &Connector{enable: false, open: open, close: close, conns: conns}
 }
 
 func (c *Connector) Config(b bool) {
@@ -44,8 +44,7 @@ func (c *Connector) RecordClose(dname string) {
 }
 
 func (c *Connector) StartRecord() {
-	done := make(chan struct{}, 0)
-	c.done = done
+	c.done = make(chan struct{}, 0)
 	for {
 		select {
 		case <-c.done:

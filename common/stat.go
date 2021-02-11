@@ -10,9 +10,9 @@ type Statistician struct {
 }
 
 func NewStatistician() *Statistician {
-	uplink := make(chan int, 8)
-	downlink := make(chan int, 8)
-	return &Statistician{enable:false,uplink: uplink, downlink: downlink}
+	uplink := make(chan int, 20)
+	downlink := make(chan int, 20)
+	return &Statistician{enable: true, uplink: uplink, downlink: downlink}
 }
 
 func (s *Statistician) Config(b bool) {
@@ -32,20 +32,19 @@ func (s *Statistician) GetDownlink() chan int {
 }
 
 func (s *Statistician) RecordUplink(n int) {
-	if s.enable{
+	if s.enable {
 		s.uplink <- n
 	}
 }
 
 func (s *Statistician) RecordDownlink(n int) {
-	if s.enable{
+	if s.enable {
 		s.downlink <- n
 	}
 }
 
 func (s *Statistician) StartRecord() {
-	done := make(chan struct{}, 0)
-	s.done = done
+	s.done = make(chan struct{}, 0)
 	for {
 		select {
 		case <-s.done:

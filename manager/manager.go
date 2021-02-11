@@ -25,7 +25,7 @@ func NewManager() *Manager {
 
 func (m *Manager) Add(worker Worker, terminal bool) {
 	m.worker = worker
-	if c, ok := worker.(*client.Client); ok&&terminal {
+	if c, ok := worker.(*client.Client); ok && terminal {
 		m.conns = c.GetConnector()
 		m.stats = c.GetStatistician()
 		m.conns.Config(true)
@@ -73,24 +73,24 @@ func (m *Manager) StopLog() {
 	}
 }
 
-func (m *Manager)StartConnector(){
+func (m *Manager) StartConnector() {
 	if m.conns != nil {
-		m.conns.StartRecord()
+		go m.conns.StartRecord()
 	}
 }
 
-func (m *Manager)StopConnector(){
+func (m *Manager) StopConnector() {
 	if m.conns != nil {
 		m.conns.StopRecord()
 	}
 }
 
-func (m *Manager)StartStatistician(){
+func (m *Manager) StartStatistician() {
 	if m.stats != nil {
-		m.stats.StartRecord()
+		go m.stats.StartRecord()
 	}
 }
-func (m *Manager)StopStatistician(){
+func (m *Manager) StopStatistician() {
 	if m.stats != nil {
 		m.stats.StopRecord()
 	}

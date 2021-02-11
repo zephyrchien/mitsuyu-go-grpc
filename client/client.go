@@ -207,7 +207,7 @@ func (c *Client) handle(in transport.Inbound) {
 		"next":   "null",
 	})
 	if allow := c.applyClientStrategy(in.Addr(), md); !allow {
-		c.logger.Infof(fmt.Sprintf("%-6s| %s:%s [blocked]\n", in.Proto(), in.Addr().Host, in.Addr().Port))
+		c.logger.Infof(fmt.Sprintf("%-6s|%s:%s|blocked\n", in.Proto(), in.Addr().Host, in.Addr().Port))
 		return
 	}
 
@@ -219,14 +219,12 @@ func (c *Client) handle(in transport.Inbound) {
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 
-	c.logger.Infof(fmt.Sprintf("%-6s| %s:%s [dns: %s]\n", in.Proto(), in.Addr().Host, in.Addr().Port, md.Get("dns")[0]))
+	c.logger.Infof(fmt.Sprintf("%-6s|%s:%s|dns=%s\n", in.Proto(), in.Addr().Host, in.Addr().Port, md.Get("dns")[0]))
 	// forward
 	go func() {
 		defer ccc.Close()
 		defer in.Close()
 		buf := make([]byte, BUFFERSIZE)
-		// statistic
-		var traffic = 0
 		for {
 			n, err := in.Read(buf)
 			if err != nil {
@@ -235,14 +233,13 @@ func (c *Client) handle(in transport.Inbound) {
 			if err = stream.Send(&mitsuyu.Data{Data: buf[:n]}); err != nil {
 				break
 			}
-			// statistic
-			traffic += n
+			// statistic uptraffic
+			c.stats.RecordUplink(n)
 		}
 		if h, ok := in.(*transport.Http); ok && !h.IsTun() {
 			time.Sleep(4 * time.Second)
 		}
 		wg.Done()
-		c.stats.RecordUplink(traffic)
 	}()
 	// reverse
 	go func() {
@@ -250,7 +247,6 @@ func (c *Client) handle(in transport.Inbound) {
 		defer in.Close()
 		// statistic
 		var n = 0
-		var traffic = 0
 		for {
 			r, err := stream.Recv()
 			if err != nil {
@@ -260,11 +256,9 @@ func (c *Client) handle(in transport.Inbound) {
 				break
 			}
 			// statistic
-			traffic += n
+			c.stats.RecordDownlink(n)
 		}
 		wg.Done()
-		// statistic
-		c.stats.RecordDownlink(traffic)
 	}()
 	wg.Wait()
 	// statistic
