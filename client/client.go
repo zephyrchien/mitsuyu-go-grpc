@@ -112,9 +112,13 @@ func (c *Client) GetStatistician() *common.Statistician {
 }
 
 func (c *Client) Run() {
+	// log info
+	c.logger.Infof("__boot__\n")
 	c.done = make(chan struct{}, 0)
 	lis, err := net.Listen("tcp", c.local)
 	if err != nil {
+		// log err
+		c.logger.Errorf(fmt.Errorf("Client: Unable to bind, %v\n", err))
 		return
 	}
 	defer lis.Close()
@@ -125,6 +129,8 @@ func (c *Client) Run() {
 		default:
 			conn, err := lis.Accept()
 			if err != nil {
+				// log err
+				c.logger.Errorf(fmt.Errorf("Client: Accept failed, %v\n", err))
 				continue
 			}
 			go c.deliver(conn)
@@ -137,9 +143,14 @@ func (c *Client) Stop() {
 		recover()
 	}()
 	close(c.done)
+	// log info
+	c.logger.Infof("__shutdown__\n")
 }
 
 func (c *Client) CallMitsuyuProxy(md metadata.MD) (*transport.GRPCStreamClient, error) {
+	// log debug
+	c.logger.Debugf("Outbound: Dial gRPC\n")
+
 	var dialopts []grpc.DialOption
 	if c.tls != nil {
 		creds := credentials.NewTLS(c.tls)
@@ -153,6 +164,8 @@ func (c *Client) CallMitsuyuProxy(md metadata.MD) (*transport.GRPCStreamClient, 
 	defer cancel()
 	grpcConn, err := grpc.DialContext(ctxx, c.remote, dialopts...)
 	if err != nil {
+		// log error
+		c.logger.Errorf(fmt.Errorf("Outbound: Dial gRPC timeout, %v\n", err))
 		return nil, err
 	}
 	cc := mitsuyu.NewMitsuyuClient(grpcConn, c.serviceName)
@@ -163,8 +176,12 @@ func (c *Client) CallMitsuyuProxy(md metadata.MD) (*transport.GRPCStreamClient, 
 	if c.compress == "true" {
 		callopts = append(callopts, grpc.UseCompressor(gzip.Name))
 	}
+	// log debug
+	c.logger.Debugf("Outbound: Create stream\n")
 	stream, err := cc.Proxy(ctx, callopts...)
 	if err != nil {
+		// log error
+		c.logger.Errorf(fmt.Errorf("Outbound: Failed to create stream, %v\n", err))
 		return nil, err
 	}
 	ccc := transport.NewGRPCStreamClient(grpcConn, stream)
@@ -172,10 +189,16 @@ func (c *Client) CallMitsuyuProxy(md metadata.MD) (*transport.GRPCStreamClient, 
 }
 
 func (c *Client) deliver(conn net.Conn) {
+	// log debug
+	c.logger.Debugf("Client: Select inbound protocol\n")
 	defer conn.Close()
+	// log debug
+	c.logger.Debugf("Client: Read first package\n")
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)
 	if err != nil {
+		// log error
+		c.logger.Errorf(fmt.Errorf("Client: Failed to read first package, %v\n", err))
 		return
 	}
 	if s5, err := transport.Socks5Handshake(buf[:n], conn); err == nil {
@@ -188,7 +211,8 @@ func (c *Client) deliver(conn net.Conn) {
 	} else if rawTCP, err := transport.NewRawTCPWithSniff(buf[:n], conn); err == nil {
 		c.handle(rawTCP)
 	} else {
-		fmt.Errorf("Inbound: Unknown protocol")
+		// log error
+		c.logger.Errorf(fmt.Errorf("Client: Unknown protocol\n"))
 	}
 }
 
@@ -206,6 +230,8 @@ func (c *Client) handle(in transport.Inbound) {
 		"dns":    "default",
 		"next":   "null",
 	})
+	// log debug
+	c.logger.Debugf("Inbound: Prepare metadata\n")
 	if allow := c.applyClientStrategy(in.Addr(), md); !allow {
 		c.logger.Infof(fmt.Sprintf("%-6s|%s:%s|blocked\n", in.Proto(), in.Addr().Host, in.Addr().Port))
 		return
@@ -225,6 +251,8 @@ func (c *Client) handle(in transport.Inbound) {
 		defer ccc.Close()
 		defer in.Close()
 		buf := make([]byte, BUFFERSIZE)
+		// log debug
+		c.logger.Debugf("Proxy: Start forward proxy\n")
 		for {
 			n, err := in.Read(buf)
 			if err != nil {
@@ -239,6 +267,8 @@ func (c *Client) handle(in transport.Inbound) {
 		if h, ok := in.(*transport.Http); ok && !h.IsTun() {
 			time.Sleep(4 * time.Second)
 		}
+		// log debug
+		c.logger.Debugf("Proxy: Finish forward proxy\n")
 		wg.Done()
 	}()
 	// reverse
@@ -247,6 +277,8 @@ func (c *Client) handle(in transport.Inbound) {
 		defer in.Close()
 		// statistic
 		var n = 0
+		// log debug
+		c.logger.Debugf("Proxy: Start reverse proxy\n")
 		for {
 			r, err := stream.Recv()
 			if err != nil {
@@ -258,15 +290,24 @@ func (c *Client) handle(in transport.Inbound) {
 			// statistic
 			c.stats.RecordDownlink(n)
 		}
+		// log debug
+		c.logger.Debugf("Proxy:  Finish reverse proxy\n")
 		wg.Done()
 	}()
 	wg.Wait()
 	// statistic
 	c.conns.RecordClose(in.Addr().Host)
+	// log debug
+	c.logger.Debugf("Proxy: Done\n")
 }
 
 func (c *Client) applyClientStrategy(addr *common.Addr, md metadata.MD) (allow bool) {
+	// log debug
+	c.logger.Debugf("Strategy: Match rules\n")
+
 	if blockReservedAddr(addr) {
+		// log debug
+		c.logger.Debugf("Strategy: Block private address\n")
 		return false
 	}
 	var matched = false
@@ -279,6 +320,8 @@ func (c *Client) applyClientStrategy(addr *common.Addr, md metadata.MD) (allow b
 		}
 	}
 	if matched {
+		// log debug
+		c.logger.Debugf("Strategy: Apply rules\n")
 		if c.strategyGroup[index].Block == "true" {
 			return false
 		}

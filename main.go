@@ -39,28 +39,28 @@ func main() {
 		loadSingleServer(m)
 	} else if *mode == "server" && *config != "" {
 		loadServer(m)
-	} else if (*mode == "client"||*mode == "client_terminal") && *config == "" {
+	} else if (*mode == "client" || *mode == "client_terminal") && *config == "" {
 		loadSingleClient(m)
-	} else if (*mode == "client"||*mode == "client_terminal") && *config != "" {
+	} else if (*mode == "client" || *mode == "client_terminal") && *config != "" {
 		loadClient(m)
 	} else {
 		fmt.Println("use cmd flags or specify config file")
 		os.Exit(0)
 	}
 	m.Start()
-	if *mode == "client_terminal"{
-		t,err:=terminal.NewTerminal(m,"black",0.2,0.7)
-		if err!=nil{
+	if *mode == "client_terminal" {
+		t, err := terminal.NewTerminal(m, "black", 0.2, 0.7)
+		if err != nil {
 			fmt.Println(err)
 			os.Exit(0)
 		}
-		r:=manager.NewLogRecorder()
+		r := manager.NewLogRecorder()
 		m.SetRecorder(r)
 		m.StartLog(r)
 		m.StartConnector()
 		m.StartStatistician()
 		go t.Run()
-	}else{
+	} else {
 		m.StartLog(os.Stdout)
 		m.StartStatistician()
 		m.StartConnector()
@@ -79,7 +79,7 @@ func loadServer(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add(ss,false)
+	m.Add(ss, false)
 }
 
 func loadSingleServer(m *manager.Manager) {
@@ -95,7 +95,7 @@ func loadSingleServer(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add(s,false)
+	m.Add(s, false)
 }
 
 func loadClient(m *manager.Manager) {
@@ -109,7 +109,7 @@ func loadClient(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add(cc,*mode=="client_terminal")
+	m.Add(cc, *mode == "client_terminal")
 }
 
 func loadSingleClient(m *manager.Manager) {
@@ -128,5 +128,5 @@ func loadSingleClient(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add(c,*mode=="client_terminal")
+	m.Add(c, *mode == "client_terminal")
 }
