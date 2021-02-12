@@ -293,11 +293,12 @@ func (c *Client) handle(in transport.Inbound) {
 			if err != nil {
 				break
 			}
-			if err = stream.Send(&mitsuyu.Data{Data: buf[:n]}); err != nil {
+			padd := common.PaddingBytes(n)
+			if err = stream.Send(&mitsuyu.Data{Data: buf[:n], Tail: padd}); err != nil {
 				break
 			}
 			// statistic uptraffic
-			c.stats.RecordUplink(n)
+			c.stats.RecordUplink(n + len(padd))
 		}
 		if h, ok := in.(*transport.Http); ok && !h.IsTun() {
 			time.Sleep(4 * time.Second)

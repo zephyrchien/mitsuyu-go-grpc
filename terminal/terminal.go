@@ -5,6 +5,7 @@ import (
 	"github.com/ZephyrChien/Mitsuyu/manager"
 	ui "github.com/gizak/termui"
 	"github.com/gizak/termui/widgets"
+	"os"
 )
 
 type element struct {
@@ -139,8 +140,9 @@ func (t *Terminal) Run() {
 	go t.renderShell(idch2)
 	for e := range event {
 		switch id := e.ID; id {
-		case "q", "<C-c>":
-			return
+		case "<C-c>":
+			ui.Close()
+			os.Exit(0)
 		case "<Up>", "<Down>", "<MouseWheelUp>", "<MouseWheelDown>":
 			if shift == 0x00 {
 				idch <- id
