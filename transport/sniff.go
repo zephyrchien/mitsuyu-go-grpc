@@ -19,7 +19,8 @@ func GetDomainName(in Inbound) {
 	if err != nil {
 		return
 	}
-	addr := &common.Addr{Isdn: true, Host: host, Port: in.Addr().Port}
+	dname := strings.Split(host, ":")[0]
+	addr := &common.Addr{Isdn: true, Host: dname, Port: in.Addr().Port}
 	in.SetAddr(addr)
 }
 

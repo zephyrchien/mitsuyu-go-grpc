@@ -27,6 +27,7 @@ var (
 
 	compress = flag.Bool("compress", false, "[client] enable compress")
 	config   = flag.String("c", "", "config file")
+	color    = flag.String("color", "black", "terminal background color")
 )
 
 func init() {
@@ -49,7 +50,7 @@ func main() {
 	}
 	m.Start()
 	if *mode == "client_terminal" {
-		t, err := terminal.NewTerminal(m, "black", 0.2, 0.7)
+		t, err := terminal.NewTerminal(m, *color, 0.2, 0.7)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(0)
