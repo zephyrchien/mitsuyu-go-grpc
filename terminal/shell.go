@@ -2,7 +2,7 @@ package terminal
 
 import (
 	"fmt"
-	ui "github.com/gizak/termui"
+	ui "github.com/gizak/termui/v3"
 	"os"
 	"strconv"
 	"strings"

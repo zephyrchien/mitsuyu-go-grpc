@@ -4,14 +4,14 @@ import (
 	//"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/ZephyrChien/Mitsuyu/client"
-	"github.com/ZephyrChien/Mitsuyu/common"
-	"github.com/ZephyrChien/Mitsuyu/mitsuyu"
-	"github.com/ZephyrChien/Mitsuyu/transport"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	_ "google.golang.org/grpc/encoding/gzip" // install gzip
 	"google.golang.org/grpc/metadata"
+	"mitsuyu/client"
+	"mitsuyu/common"
+	"mitsuyu/mitsuyu"
+	"mitsuyu/transport"
 	"net"
 	"sync"
 )

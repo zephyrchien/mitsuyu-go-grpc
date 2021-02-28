@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/ZephyrChien/Mitsuyu/common"
+	"mitsuyu/common"
 	"net"
 	"strconv"
 	"strings"

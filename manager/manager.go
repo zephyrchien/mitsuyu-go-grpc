@@ -1,9 +1,9 @@
 package manager
 
 import (
-	"github.com/ZephyrChien/Mitsuyu/client"
-	"github.com/ZephyrChien/Mitsuyu/common"
 	"io"
+	"mitsuyu/client"
+	"mitsuyu/common"
 )
 
 type Worker interface {

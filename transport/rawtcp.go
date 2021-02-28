@@ -2,7 +2,7 @@ package transport
 
 import (
 	"bytes"
-	"github.com/ZephyrChien/Mitsuyu/common"
+	"mitsuyu/common"
 	"net"
 	"strings"
 )

@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ZephyrChien/Mitsuyu/client"
-	"github.com/ZephyrChien/Mitsuyu/common"
-	"github.com/ZephyrChien/Mitsuyu/manager"
-	"github.com/ZephyrChien/Mitsuyu/server"
-	"github.com/ZephyrChien/Mitsuyu/terminal"
+	"mitsuyu/client"
+	"mitsuyu/common"
+	"mitsuyu/manager"
+	"mitsuyu/server"
+	"mitsuyu/terminal"
 	"os"
 	"strconv"
 )

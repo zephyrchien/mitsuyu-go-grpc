@@ -2,9 +2,9 @@ package terminal
 
 import (
 	"fmt"
-	"github.com/ZephyrChien/Mitsuyu/manager"
-	ui "github.com/gizak/termui"
-	"github.com/gizak/termui/widgets"
+	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
+	"mitsuyu/manager"
 	"os"
 )
 

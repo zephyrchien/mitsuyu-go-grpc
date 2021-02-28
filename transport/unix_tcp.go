@@ -5,7 +5,7 @@ package transport
 import (
 	"bytes"
 	"fmt"
-	"github.com/ZephyrChien/Mitsuyu/common"
+	"mitsuyu/common"
 	"net"
 	"strconv"
 	"syscall"

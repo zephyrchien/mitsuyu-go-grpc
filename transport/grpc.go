@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"github.com/ZephyrChien/Mitsuyu/mitsuyu"
 	"google.golang.org/grpc"
+	"mitsuyu/mitsuyu"
 )
 
 type GRPCStreamClient struct {

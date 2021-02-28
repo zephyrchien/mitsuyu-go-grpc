@@ -1,7 +1,7 @@
 package terminal
 
 import (
-	ui "github.com/gizak/termui"
+	ui "github.com/gizak/termui/v3"
 )
 
 func (t *Terminal) renderInfo(idch chan string) {
