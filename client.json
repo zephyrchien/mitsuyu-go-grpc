@@ -10,6 +10,7 @@
   "compress": "true/false",
   "upload_limit": "1000, measured in kb",
   "download_limit": "1000, measured in kb",
+  "padding": "1024, no less than",
   "strategy": [
     {
       "dns": "x.x.x.x:53",
