@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"mitsuyu/api"
 	"mitsuyu/client"
 	"mitsuyu/common"
 	"mitsuyu/manager"
@@ -16,6 +17,9 @@ const VERSION = "v1.0.0"
 
 var (
 	version = flag.Bool("v", false, "show version")
+
+	apii  = flag.String("api", "", "local api addr")
+	token = flag.String("token", "", "local api token")
 
 	mode   = flag.String("m", "", "mode, server/client/client_terminal")
 	local  = flag.String("l", "", "listen addr, [client] support socks5/http")
@@ -57,6 +61,14 @@ func main() {
 		os.Exit(0)
 	}
 	m.Start()
+	if (*mode == "client" || *mode == "client_terminal") && *apii != "" {
+		a := api.NewApi(m, *apii, *token)
+		a.Serve()
+	}
+	if *mode == "client_terminal" || *apii != "" {
+		m.StartConnector()
+		m.StartStatistician()
+	}
 	if *mode == "client_terminal" {
 		t, err := terminal.NewTerminal(m, *color, 0.2, 0.7)
 		if err != nil {
@@ -66,8 +78,6 @@ func main() {
 		r := manager.NewLogRecorder()
 		m.SetRecorder(r)
 		m.StartLog(r)
-		m.StartConnector()
-		m.StartStatistician()
 		go t.Run()
 	} else {
 		m.StartLog(os.Stdout)
@@ -86,7 +96,7 @@ func loadServer(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add(ss, false)
+	m.Add(ss)
 }
 
 func loadSingleServer(m *manager.Manager) {
@@ -102,7 +112,7 @@ func loadSingleServer(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add(s, false)
+	m.Add(s)
 }
 
 func loadClient(m *manager.Manager) {
@@ -116,7 +126,7 @@ func loadClient(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add(cc, *mode == "client_terminal")
+	m.Add(cc)
 }
 
 func loadSingleClient(m *manager.Manager) {
@@ -135,5 +145,5 @@ func loadSingleClient(m *manager.Manager) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m.Add(c, *mode == "client_terminal")
+	m.Add(c)
 }

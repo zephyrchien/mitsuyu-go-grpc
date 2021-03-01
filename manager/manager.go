@@ -15,45 +15,49 @@ type Worker interface {
 type Manager struct {
 	worker   Worker
 	recorder *LogRecorder
-	conns    *common.Connector
-	stats    *common.Statistician
+	//conns    *common.Connector
+	//stats    *common.Statistician
 }
 
 func NewManager() *Manager {
 	return &Manager{}
 }
 
-func (m *Manager) Add(worker Worker, terminal bool) {
+func (m *Manager) Add(worker Worker) {
 	m.worker = worker
-	if c, ok := worker.(*client.Client); ok && terminal {
-		m.conns = c.GetConnector()
-		m.stats = c.GetStatistician()
-	}
 }
 
 func (m *Manager) SetRecorder(r *LogRecorder) {
 	m.recorder = r
 }
 
-func (m *Manager) GetWorker() Worker {
-	return m.worker
-}
-
-func (m *Manager) GetClient() (*client.Client, bool) {
-	c, ok := m.worker.(*client.Client)
-	return c, ok
-}
-
 func (m *Manager) GetRecorder() *LogRecorder {
 	return m.recorder
 }
 
+func (m *Manager) GetWorker() Worker {
+	return m.worker
+}
+
+func (m *Manager) GetClient() *client.Client {
+	if c, ok := m.worker.(*client.Client); ok {
+		return c
+	}
+	return nil
+}
+
 func (m *Manager) GetConnector() *common.Connector {
-	return m.conns
+	if c, ok := m.worker.(*client.Client); ok {
+		return c.GetConnector()
+	}
+	return nil
 }
 
 func (m *Manager) GetStatistician() *common.Statistician {
-	return m.stats
+	if c, ok := m.worker.(*client.Client); ok {
+		return c.GetStatistician()
+	}
+	return nil
 }
 
 func (m *Manager) Start() {
@@ -81,25 +85,25 @@ func (m *Manager) StopLog() {
 }
 
 func (m *Manager) StartConnector() {
-	if m.conns != nil {
-		go m.conns.StartRecord()
+	if conns := m.GetConnector(); conns != nil {
+		go conns.StartRecord()
 	}
 }
 
 func (m *Manager) StopConnector() {
-	if m.conns != nil {
-		m.conns.StopRecord()
+	if conns := m.GetConnector(); conns != nil {
+		conns.StopRecord()
 	}
 }
 
 func (m *Manager) StartStatistician() {
-	if m.stats != nil {
-		go m.stats.StartRecord()
+	if stats := m.GetStatistician(); stats != nil {
+		go stats.StartRecord()
 	}
 }
 
 func (m *Manager) StopStatistician() {
-	if m.stats != nil {
-		m.stats.StopRecord()
+	if stats := m.GetStatistician(); stats != nil {
+		stats.StopRecord()
 	}
 }

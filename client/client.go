@@ -106,6 +106,7 @@ func (c *Client) Remote() string {
 func (c *Client) SetLocal(local string) {
 	c.local = local
 }
+
 func (c *Client) SetRemote(remote string) {
 	c.remote = remote
 }
@@ -123,6 +124,10 @@ func (c *Client) SetCompress(b bool) {
 	} else {
 		c.compress = "false"
 	}
+}
+
+func (c *Client) GetServiceName() string {
+	return c.serviceName
 }
 
 func (c *Client) GetSummary() []string {

@@ -68,7 +68,7 @@ func (t *Terminal) handle(cmd string, history *[]string) string {
 		*history = make([]string, 0, 50)
 		ret = "history cleared"
 	case "ls":
-		if cc, ok := m.GetClient(); !ok {
+		if cc := m.GetClient(); cc == nil {
 			ret = cmd + ": command not found"
 		} else {
 			ss := cc.GetSummary()
@@ -79,8 +79,8 @@ func (t *Terminal) handle(cmd string, history *[]string) string {
 		}
 
 	case "set":
-		cc, ok := m.GetClient()
-		if len(cmds) != 3 || !ok {
+		cc := m.GetClient()
+		if len(cmds) != 3 || cc == nil {
 			ret = cmd + ": command not found"
 		} else {
 			if i, err := strconv.Atoi(cmds[2]); err == nil {
