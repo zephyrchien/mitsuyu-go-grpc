@@ -6,12 +6,15 @@ import (
 	"time"
 )
 
-func PaddingBytes(srclen int) []byte {
-	if srclen > 256 || srclen <= 0 {
+func PaddingBytes(srclen, minlen int) []byte {
+	if minlen == 0 {
+		return nil
+	}
+	if srclen > minlen || srclen <= 0 {
 		return nil
 	}
 	rand.Seed(time.Now().UnixNano())
-	l := 256 - srclen + rand.Intn(256)
+	l := minlen - srclen + rand.Intn(256)
 	padd := bytes.Repeat([]byte{byte(srclen)}, l)
 	return padd
 }

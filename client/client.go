@@ -27,6 +27,7 @@ type Client struct {
 	local         string
 	remote        string
 	tls           *tls.Config
+	padding		  int
 	compress      string
 	serviceName   string
 	strategyGroup []*common.Strategy
@@ -56,6 +57,7 @@ func New(config *common.ClientConfig) (*Client, error) {
 
 	c.compress = config.Compress
 
+	c.padding,_ = strconv.Atoi(config.Padding)
 	// load tls config
 	if config.TLS == "true" {
 		sni := config.TLSSNI
@@ -301,7 +303,7 @@ func (c *Client) handle(in transport.Inbound) {
 			if err != nil {
 				break
 			}
-			padd := common.PaddingBytes(n)
+			padd := common.PaddingBytes(n,c.padding)
 			if err = stream.Send(&mitsuyu.Data{Data: buf[:n], Tail: padd}); err != nil {
 				break
 			}
