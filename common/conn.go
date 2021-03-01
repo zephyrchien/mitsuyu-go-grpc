@@ -50,6 +50,7 @@ func (c *Connector) RecordClose(dname string) {
 
 func (c *Connector) StartRecord() {
 	c.done = make(chan struct{}, 0)
+	c.enable = true
 	for {
 		select {
 		case <-c.done:
@@ -76,6 +77,7 @@ func (c *Connector) StopRecord() {
 	defer func() {
 		recover()
 	}()
+	c.enable = false
 	close(c.done)
 }
 

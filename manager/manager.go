@@ -28,8 +28,6 @@ func (m *Manager) Add(worker Worker, terminal bool) {
 	if c, ok := worker.(*client.Client); ok && terminal {
 		m.conns = c.GetConnector()
 		m.stats = c.GetStatistician()
-		m.conns.Config(true)
-		m.stats.Config(true)
 	}
 }
 
@@ -99,6 +97,7 @@ func (m *Manager) StartStatistician() {
 		go m.stats.StartRecord()
 	}
 }
+
 func (m *Manager) StopStatistician() {
 	if m.stats != nil {
 		m.stats.StopRecord()

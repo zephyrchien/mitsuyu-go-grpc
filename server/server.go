@@ -13,6 +13,7 @@ import (
 	"mitsuyu/mitsuyu"
 	"mitsuyu/transport"
 	"net"
+	"os"
 	"sync"
 )
 
@@ -55,7 +56,8 @@ func (s *Server) Run() {
 	s.done = make(chan struct{}, 0)
 	lis, err := net.Listen("tcp", s.addr)
 	if err != nil {
-		return
+		fmt.Printf("Server: Unable to bind %s, %v\n", s.addr, err)
+		os.Exit(0)
 	}
 	defer lis.Close()
 	var opts []grpc.ServerOption

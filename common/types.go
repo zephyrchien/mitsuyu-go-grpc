@@ -42,5 +42,8 @@ type ClientConfig struct {
 	//
 	Compress string `json:"compress,omitempty"`
 	//
+	UpLimit   string `json:"upload_limit,omitempty"`
+	DownLimit string `json:"download_limit,omitempty"`
+	//
 	StrategyGroup []*Strategy `json:"strategy,omitempty"`
 }

@@ -14,6 +14,7 @@ import (
 	"mitsuyu/mitsuyu"
 	"mitsuyu/transport"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -87,7 +88,10 @@ func New(config *common.ClientConfig) (*Client, error) {
 
 	// enable statistic
 	c.conns = common.NewConnector()
-	c.stats = common.NewStatistician()
+	// enable network limit
+	uplimit, _ := strconv.Atoi(config.UpLimit)
+	downlimit, _ := strconv.Atoi(config.DownLimit)
+	c.stats = common.NewStatistician(uplimit*1024, downlimit*1024)
 	return c, nil
 }
 
@@ -150,9 +154,8 @@ func (c *Client) Run() {
 	c.done = make(chan struct{}, 0)
 	lis, err := net.Listen("tcp", c.local)
 	if err != nil {
-		// log err
-		c.logger.Errorf(fmt.Errorf("Client: Unable to bind, %v\n", err))
-		return
+		fmt.Printf("Client: Unable to bind %s, %v\n", c.local, err)
+		os.Exit(0)
 	}
 	defer lis.Close()
 	for {

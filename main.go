@@ -12,7 +12,11 @@ import (
 	"strconv"
 )
 
+const VERSION = "v1.0.0"
+
 var (
+	version = flag.Bool("v", false, "show version")
+
 	mode   = flag.String("m", "", "mode, server/client/client_terminal")
 	local  = flag.String("l", "", "listen addr, [client] support socks5/http")
 	remote = flag.String("r", "", "[client] remote addr")
@@ -35,6 +39,10 @@ func init() {
 }
 
 func main() {
+	if *version {
+		fmt.Println(VERSION)
+		os.Exit(0)
+	}
 	m := manager.NewManager()
 	if *mode == "server" && *config == "" {
 		loadSingleServer(m)
