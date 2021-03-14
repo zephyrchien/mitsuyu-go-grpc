@@ -48,4 +48,7 @@ type ClientConfig struct {
 	DownLimit string `json:"download_limit,omitempty"`
 	//
 	StrategyGroup []*Strategy `json:"strategy,omitempty"`
+	//
+	ReuseTimeout string `json:"reuse_timeout,omitempty"`
+	ReuseMaxsize string `json:"reuse_maxsize,omitempty"`
 }
