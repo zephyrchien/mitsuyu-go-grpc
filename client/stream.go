@@ -19,7 +19,7 @@ type stream struct {
 }
 
 type pool struct {
-	cap		int
+	cap     int
 	lock    sync.Mutex
 	streams []*stream
 }
@@ -68,10 +68,10 @@ func (p *pool) size() int {
 	return len(p.streams)
 }
 
-func (p *pool) push(s *stream) error{
+func (p *pool) push(s *stream) error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	if p.cap !=0 && len(p.streams) >= p.cap {
+	if p.cap != 0 && len(p.streams) >= p.cap {
 		return errors.New("Exceed max capacity")
 	}
 	p.streams = append(p.streams, s)
@@ -117,7 +117,7 @@ func (c *Client) handleReuse(in transport.Inbound, md metadata.MD) {
 			return
 		}
 		c.logger.Infof(fmt.Sprintf("%-6s|[new]%s:%s|dns=%s\n", in.Proto(), in.Addr().Host, in.Addr().Port, md.Get("dns")[0]))
-	}else{
+	} else {
 		c.logger.Infof(fmt.Sprintf("%-6s|[reuse]%s:%s|dns=%s\n", in.Proto(), in.Addr().Host, in.Addr().Port, md.Get("dns")[0]))
 	}
 
@@ -132,7 +132,7 @@ func (c *Client) handleReuse(in transport.Inbound, md metadata.MD) {
 		for {
 			n, err := in.Read(buf)
 			if err != nil {
-				stream.send(&mitsuyu.Data{Head: []byte{transport.CMD,transport.CMD_EOF}})
+				stream.send(&mitsuyu.Data{Head: []byte{transport.CMD, transport.CMD_EOF}})
 				break
 			}
 			padd := common.PaddingBytes(n, c.padding)
@@ -163,7 +163,7 @@ func (c *Client) handleReuse(in transport.Inbound, md metadata.MD) {
 			if err != nil {
 				break
 			}
-			if head:=r.GetHead();len(head)==2 && head[0]==transport.CMD&&head[1]==transport.CMD_EOF{
+			if head := r.GetHead(); len(head) == 2 && head[0] == transport.CMD && head[1] == transport.CMD_EOF {
 				break
 			}
 			if n, err = in.Write(r.GetData()); err != nil {

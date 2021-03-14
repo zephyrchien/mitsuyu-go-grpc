@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"errors"
 	"bytes"
+	"errors"
 	"google.golang.org/grpc"
 	"mitsuyu/mitsuyu"
 )
@@ -86,7 +86,7 @@ func (s *GRPCStreamServer) Read(b []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	if head:=r.GetHead();len(head)==2 &&head[0]==CMD&&head[1]==CMD_EOF{
+	if head := r.GetHead(); len(head) == 2 && head[0] == CMD && head[1] == CMD_EOF {
 		return 2, ERR_CMD_EOF
 	}
 	n := copy(b, r.GetData())

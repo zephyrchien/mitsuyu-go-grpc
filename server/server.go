@@ -94,8 +94,8 @@ func (s *Server) Proxy(stream mitsuyu.Mitsuyu_ProxyServer) error {
 			return fmt.Errorf("Proxy: %v", err)
 		}
 		// parse ctrl info
-		if reuse,err=parseReuse(md,header);err!=nil{
-			return fmt.Errorf("%v",err)
+		if reuse, err = parseReuse(md, header); err != nil {
+			return fmt.Errorf("%v", err)
 		}
 		// start proxy
 		out, err := decideDestination(md, header)
@@ -115,21 +115,20 @@ func (s *Server) Proxy(stream mitsuyu.Mitsuyu_ProxyServer) error {
 	return nil
 }
 
-func parseReuse(md metadata.MD, header []byte) (is bool, err error){
-	defer func() {
-		if e := recover(); e != nil {
-			err = fmt.Errorf("Proxy: Unable to parse metadata %v", e)
-		}
-	}()
-	reuse := md.Get("reuse")[0]
+func parseReuse(md metadata.MD, header []byte) (is bool, err error) {
+	r := md.Get("reuse")
+	if len(r) == 0 {
+		return is, nil
+	}
+	reuse := r[0]
 	// for a reused conn, parse metadata from data.head instead
-	if is = reuse == "true";is {
+	if is = reuse == "true"; is {
 		if header == nil {
-			return is,fmt.Errorf("Reuse: Empty header\n")
+			return is, fmt.Errorf("Reuse: Empty header\n")
 		}
-		mdstrs:=strings.Split(string(header),"\r\n")
+		mdstrs := strings.Split(string(header), "\r\n")
 		if len(mdstrs)%2 == 1 {
-			return is,fmt.Errorf("Reuse: Unable to parse header\n")
+			return is, fmt.Errorf("Reuse: Unable to parse header\n")
 		}
 		var key string
 		for i, s := range mdstrs {
@@ -137,7 +136,7 @@ func parseReuse(md metadata.MD, header []byte) (is bool, err error){
 				key = s
 				continue
 			}
-			md.Set(key,s)
+			md.Set(key, s)
 		}
 	}
 	return is, nil
@@ -192,7 +191,7 @@ func decideDestination(md metadata.MD, header []byte) (out transport.Outbound, e
 
 func forward(wg *sync.WaitGroup, in *transport.GRPCStreamServer, out transport.Outbound) {
 	defer out.Close()
-	buf:=make([]byte,BUFFERSIZE)
+	buf := make([]byte, BUFFERSIZE)
 	for {
 		n, err := in.Read(buf)
 		if err != nil {
@@ -211,7 +210,7 @@ func reverse(wg *sync.WaitGroup, in *transport.GRPCStreamServer, out transport.O
 	for {
 		n, err := out.Read(buf)
 		if err != nil {
-			in.WriteAll(&mitsuyu.Data{Head: []byte{transport.CMD,transport.CMD_EOF}})
+			in.WriteAll(&mitsuyu.Data{Head: []byte{transport.CMD, transport.CMD_EOF}})
 			break
 		}
 		if err = in.WriteAll(&mitsuyu.Data{Data: buf[:n]}); err != nil {
