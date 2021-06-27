@@ -27,9 +27,7 @@ type Client struct {
 	local         string
 	remote        string
 	tls           *tls.Config
-	timeout       int
-	maxsize		  int
-	padding       int
+	padding		  int
 	compress      string
 	serviceName   string
 	strategyGroup []*common.Strategy
@@ -59,10 +57,7 @@ func New(config *common.ClientConfig) (*Client, error) {
 
 	c.compress = config.Compress
 
-	c.timeout, _ = strconv.Atoi(config.ReuseTimeout)
-	c.maxsize,_  = strconv.Atoi(config.ReuseMaxsize)
-
-	c.padding, _ = strconv.Atoi(config.Padding)
+	c.padding,_ = strconv.Atoi(config.Padding)
 	// load tls config
 	if config.TLS == "true" {
 		sni := config.TLSSNI
@@ -99,10 +94,6 @@ func New(config *common.ClientConfig) (*Client, error) {
 	uplimit, _ := strconv.Atoi(config.UpLimit)
 	downlimit, _ := strconv.Atoi(config.DownLimit)
 	c.stats = common.NewStatistician(uplimit*1024, downlimit*1024)
-	// init stream pool
-	if c.timeout > 0 {
-		StreamPool = &pool{cap: c.maxsize}
-	}
 	return c, nil
 }
 
@@ -283,18 +274,11 @@ func (c *Client) handle(in transport.Inbound) {
 		"isdn":   strconv.FormatBool(in.Addr().Isdn),
 		"dns":    "default",
 		"next":   "null",
-		"reuse":  "false",
 	})
 	// log debug
 	c.logger.Debugf("Inbound: Prepare metadata\n")
 	if allow := c.applyClientStrategy(in.Addr(), md); !allow {
 		c.logger.Infof(fmt.Sprintf("%-6s|%s:%s|blocked\n", in.Proto(), in.Addr().Host, in.Addr().Port))
-		return
-	}
-
-	// reuse
-	if c.timeout > 0 {
-		c.handleReuse(in, md)
 		return
 	}
 
@@ -319,7 +303,7 @@ func (c *Client) handle(in transport.Inbound) {
 			if err != nil {
 				break
 			}
-			padd := common.PaddingBytes(n, c.padding)
+			padd := common.PaddingBytes(n,c.padding)
 			if err = stream.Send(&mitsuyu.Data{Data: buf[:n], Tail: padd}); err != nil {
 				break
 			}

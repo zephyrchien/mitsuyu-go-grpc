@@ -14,7 +14,6 @@ import (
 	"mitsuyu/transport"
 	"net"
 	"os"
-	"strings"
 	"sync"
 )
 
@@ -86,64 +85,21 @@ func (s *Server) Proxy(stream mitsuyu.Mitsuyu_ProxyServer) error {
 	if !ok {
 		return fmt.Errorf("Proxy: Unknown headers")
 	}
-	in := transport.NewGRPCStreamServer(stream)
-	var reuse bool
-	for {
-		header, err := in.SniffHeader()
-		if err != nil {
-			return fmt.Errorf("Proxy: %v", err)
-		}
-		// parse ctrl info
-		if reuse,err=parseReuse(md,header);err!=nil{
-			return fmt.Errorf("%v",err)
-		}
-		// start proxy
-		out, err := decideDestination(md, header)
-		if err != nil {
-			return fmt.Errorf("%v", err)
-		}
-		wg := new(sync.WaitGroup)
-		wg.Add(2)
-		go forward(wg, in, out)
-		go reverse(wg, in, out)
-		wg.Wait()
-		if !reuse {
-			break
-		}
-	}
 
+	// start proxy
+	out, err := decideDestination(md)
+	if err != nil {
+		return fmt.Errorf("Proxy: %v", err)
+	}
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
+	go forward(wg, out, stream)
+	go reverse(wg, out, stream)
+	wg.Wait()
 	return nil
 }
 
-func parseReuse(md metadata.MD, header []byte) (is bool, err error){
-	defer func() {
-		if e := recover(); e != nil {
-			err = fmt.Errorf("Proxy: Unable to parse metadata %v", e)
-		}
-	}()
-	reuse := md.Get("reuse")[0]
-	// for a reused conn, parse metadata from data.head instead
-	if is = reuse == "true";is {
-		if header == nil {
-			return is,fmt.Errorf("Reuse: Empty header\n")
-		}
-		mdstrs:=strings.Split(string(header),"\r\n")
-		if len(mdstrs)%2 == 1 {
-			return is,fmt.Errorf("Reuse: Unable to parse header\n")
-		}
-		var key string
-		for i, s := range mdstrs {
-			if i%2 == 0 {
-				key = s
-				continue
-			}
-			md.Set(key,s)
-		}
-	}
-	return is, nil
-}
-
-func decideDestination(md metadata.MD, header []byte) (out transport.Outbound, err error) {
+func decideDestination(md metadata.MD) (out transport.Outbound, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("Proxy: Unable to decide destination %v", e)
@@ -155,7 +111,6 @@ func decideDestination(md metadata.MD, header []byte) (out transport.Outbound, e
 	port = md.Get("port")[0]
 	dns = md.Get("dns")[0]
 	next = md.Get("next")[0]
-
 	// proxy chain
 	if next != "null" {
 		md.Set("next", "null")
@@ -190,31 +145,29 @@ func decideDestination(md metadata.MD, header []byte) (out transport.Outbound, e
 	return net.Dial("tcp", addr)
 }
 
-func forward(wg *sync.WaitGroup, in *transport.GRPCStreamServer, out transport.Outbound) {
+func forward(wg *sync.WaitGroup, out transport.Outbound, stream mitsuyu.Mitsuyu_ProxyServer) {
 	defer out.Close()
-	buf:=make([]byte,BUFFERSIZE)
 	for {
-		n, err := in.Read(buf)
+		r, err := stream.Recv()
 		if err != nil {
 			break
 		}
-		if _, err = out.Write(buf[:n]); err != nil {
+		if _, err = out.Write(r.GetData()); err != nil {
 			break
 		}
 	}
 	wg.Done()
 }
 
-func reverse(wg *sync.WaitGroup, in *transport.GRPCStreamServer, out transport.Outbound) {
+func reverse(wg *sync.WaitGroup, out transport.Outbound, stream mitsuyu.Mitsuyu_ProxyServer) {
 	defer out.Close()
 	buf := make([]byte, BUFFERSIZE)
 	for {
 		n, err := out.Read(buf)
 		if err != nil {
-			in.WriteAll(&mitsuyu.Data{Head: []byte{transport.CMD,transport.CMD_EOF}})
 			break
 		}
-		if err = in.WriteAll(&mitsuyu.Data{Data: buf[:n]}); err != nil {
+		if err = stream.Send(&mitsuyu.Data{Data: buf[:n]}); err != nil {
 			break
 		}
 	}
