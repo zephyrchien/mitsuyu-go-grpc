@@ -28,7 +28,7 @@ type Client struct {
 	remote        string
 	tls           *tls.Config
 	timeout       int
-	maxsize       int
+	maxsize		  int
 	padding       int
 	compress      string
 	serviceName   string
@@ -60,7 +60,7 @@ func New(config *common.ClientConfig) (*Client, error) {
 	c.compress = config.Compress
 
 	c.timeout, _ = strconv.Atoi(config.ReuseTimeout)
-	c.maxsize, _ = strconv.Atoi(config.ReuseMaxsize)
+	c.maxsize,_  = strconv.Atoi(config.ReuseMaxsize)
 
 	c.padding, _ = strconv.Atoi(config.Padding)
 	// load tls config

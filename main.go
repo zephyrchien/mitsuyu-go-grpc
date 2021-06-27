@@ -13,7 +13,7 @@ import (
 	"strconv"
 )
 
-const VERSION = "v1.0.5"
+const VERSION = "v1.0.0"
 
 var (
 	version = flag.Bool("v", false, "show version")
