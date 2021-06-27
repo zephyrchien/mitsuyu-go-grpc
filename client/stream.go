@@ -15,7 +15,6 @@ import (
 
 type stream struct {
 	conn     *transport.GRPCStreamClient
-	dead     bool
 	deadline time.Time
 }
 
@@ -58,12 +57,8 @@ func (s *stream) close() error {
 	return s.conn.Close()
 }
 
-func (s *stream) markdead() {
-	s.dead = true
-}
-
 func (s *stream) timeout() bool {
-	if s.dead || time.Now().After(s.deadline) {
+	if time.Now().After(s.deadline) {
 		return true
 	}
 	return false
@@ -142,7 +137,6 @@ func (c *Client) handleReuse(in transport.Inbound, md metadata.MD) {
 			}
 			padd := common.PaddingBytes(n, c.padding)
 			if err = stream.send(&mitsuyu.Data{Data: buf[:n], Tail: padd, Head: mdbin.Bytes()}); err != nil {
-				stream.markdead()
 				break
 			}
 			// statistic uptraffic
@@ -167,7 +161,6 @@ func (c *Client) handleReuse(in transport.Inbound, md metadata.MD) {
 		for {
 			r, err := stream.recv()
 			if err != nil {
-				stream.markdead()
 				break
 			}
 			if head := r.GetHead(); len(head) == 2 && head[0] == transport.CMD && head[1] == transport.CMD_EOF {
